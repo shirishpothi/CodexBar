@@ -1,4 +1,5 @@
 import AppKit
+import CoreGraphics
 import Observation
 import SwiftUI
 import XCTest
@@ -31,7 +32,7 @@ final class CodexAccountNamesNativeProofTests: XCTestCase {
         _ = app.setActivationPolicy(.regular)
         app.finishLaunching()
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1060, height: 740),
+            contentRect: NSRect(x: 0, y: 0, width: 1060, height: 520),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false)
@@ -70,6 +71,7 @@ final class CodexAccountNamesNativeProofTests: XCTestCase {
             try await self.waitUntil { model.settings.hidePersonalInfo }
             XCTAssertTrue(model.accounts.allSatisfy { model.card(for: $0)?.providerName == "Codex" })
             XCTAssertFalse(model.privateLabels.values.contains { $0.contains("Personal") })
+            try await Task.sleep(for: .milliseconds(250))
             try self.capture("05-private", window: window, output: output)
             XCTAssertTrue(privacy.accessibilityPerformPress())
             try await self.waitUntil { !model.settings.hidePersonalInfo }
@@ -99,17 +101,19 @@ final class CodexAccountNamesNativeProofTests: XCTestCase {
         window: NSWindow,
         output: URL) async throws
     {
-        let buttons = self.elements(window).filter { $0.accessibilityRole() == .button && self.title($0) == "Rename" }
+        let controls = self.elements(window)
+        let buttons = controls.filter { $0.accessibilityRole() == .button && self.title($0) == "Rename" }
         let button = try XCTUnwrap(buttons.indices.contains(index) ? buttons[index] : nil)
         XCTAssertTrue(button.accessibilityPerformPress())
         try await self.waitUntil { window.attachedSheet != nil }
         let sheet = try XCTUnwrap(window.attachedSheet)
         if model.renameCallbacks == 0 {
-            try self.capture("02-rename-dialog", window: sheet, output: output)
+            try await Task.sleep(for: .milliseconds(350))
+            try self.capture("02-rename-dialog", window: window, output: output)
         }
         let field = try XCTUnwrap(self.elements(sheet).first { $0.accessibilityRole() == .textField })
         field.setAccessibilityValue(name)
-        if let textField = field as? NSTextField {
+        if let textField = field.object as? NSTextField {
             textField.delegate?.controlTextDidChange?(Notification(
                 name: NSControl.textDidChangeNotification,
                 object: textField))
@@ -117,19 +121,33 @@ final class CodexAccountNamesNativeProofTests: XCTestCase {
         let save = try XCTUnwrap(self.elements(sheet)
             .first { $0.accessibilityRole() == .button && self.title($0) == "Save" })
         let before = model.renameCallbacks
-        XCTAssertTrue(save.accessibilityPerformPress())
+        _ = save.accessibilityPerformPress()
         try await self.waitUntil { model.renameCallbacks == before + 1 && window.attachedSheet == nil }
         XCTAssertEqual(model.names[index], name.isEmpty ? nil : name)
         try await Task.sleep(for: .milliseconds(150))
     }
 
-    private func title(_ element: any NSAccessibilityProtocol) -> String? {
+    private func title(_ element: AccountNamesProofElement) -> String? {
         element.accessibilityLabel() ?? element.accessibilityTitle()
     }
 
-    private func elements(_ root: Any, depth: Int = 0) -> [any NSAccessibilityProtocol] {
-        guard depth < 25, let element = root as? any NSAccessibilityProtocol else { return [] }
-        return [element] + (element.accessibilityChildren() ?? []).flatMap { self.elements($0, depth: depth + 1) }
+    private func elements(_ root: Any) -> [AccountNamesProofElement] {
+        var visited = Set<ObjectIdentifier>()
+        func descend(_ root: Any, depth: Int) -> [AccountNamesProofElement] {
+            guard depth < 25, let object = root as? NSObject,
+                  visited.insert(ObjectIdentifier(object)).inserted else { return [] }
+            let element = AccountNamesProofElement(object: object)
+            var result = [element]
+            result += element.children.flatMap { descend($0, depth: depth + 1) }
+            if let window = object as? NSWindow, let content = window.contentView {
+                result += descend(content, depth: depth + 1)
+            }
+            if let view = object as? NSView {
+                result += view.subviews.flatMap { descend($0, depth: depth + 1) }
+            }
+            return result
+        }
+        return descend(root, depth: 0)
     }
 
     private func waitUntil(_ condition: () -> Bool) async throws {
@@ -146,7 +164,28 @@ final class CodexAccountNamesNativeProofTests: XCTestCase {
     private func capture(_ name: String, window: NSWindow, output: URL) throws {
         window.layoutIfNeeded()
         window.displayIfNeeded()
-        // Capture this process's own view pixels only. No desktop capture or Screen Recording permission.
+        if ProcessInfo.processInfo.environment["CODEXBAR_ACCOUNT_NAMES_PROOF_CAPTURE_WINDOWS"] == "1" {
+            // Never request permission, and never capture a desktop or a window from another process.
+            guard CGPreflightScreenCaptureAccess() else {
+                throw NSError(domain: "AccountNamesProof", code: 2, userInfo: [
+                    NSLocalizedDescriptionKey: "Window capture requires permission that is already granted",
+                ])
+            }
+            let capture = Process()
+            capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+            capture.arguments = [
+                "-x",
+                "-o",
+                "-l",
+                String(window.windowNumber),
+                output.appendingPathComponent(name + ".png").path,
+            ]
+            try capture.run()
+            capture.waitUntilExit()
+            XCTAssertEqual(capture.terminationStatus, 0)
+            return
+        }
+        // Default to this process's own view pixels without Screen Recording permission.
         let view = try XCTUnwrap(window.contentView)
         let bitmap = try XCTUnwrap(view.bitmapImageRepForCachingDisplay(in: view.bounds))
         view.cacheDisplay(in: view.bounds, to: bitmap)
@@ -314,7 +353,7 @@ private struct AccountNamesProofView: View {
             .frame(width: 350)
         }
         .padding(24)
-        .frame(width: 1060, height: 740, alignment: .topLeading)
+        .frame(width: 1060, height: 520, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 }
@@ -337,5 +376,42 @@ private struct AccountNamesProofSwitcher: NSViewRepresentable {
         switcher.frame = nsView.bounds
         switcher.autoresizingMask = [.width, .height]
         nsView.addSubview(switcher)
+    }
+}
+
+/// SwiftUI virtual accessibility elements do not all declare the full AppKit protocol.
+/// These public selectors are sent only to objects reached from the synthetic host's own window.
+private struct AccountNamesProofElement {
+    let object: NSObject
+
+    private func value(_ name: String) -> AnyObject? {
+        let selector = NSSelectorFromString(name)
+        guard self.object.responds(to: selector) else { return nil }
+        return self.object.perform(selector)?.takeUnretainedValue()
+    }
+
+    var children: [Any] {
+        self.value("accessibilityChildren") as? [Any] ?? []
+    }
+
+    func accessibilityRole() -> NSAccessibility.Role? {
+        (self.value("accessibilityRole") as? String).map(NSAccessibility.Role.init(rawValue:))
+    }
+
+    func accessibilityLabel() -> String? { self.value("accessibilityLabel") as? String }
+    func accessibilityTitle() -> String? { self.value("accessibilityTitle") as? String }
+
+    func setAccessibilityValue(_ value: String) {
+        let selector = NSSelectorFromString("setAccessibilityValue:")
+        guard self.object.responds(to: selector) else { return }
+        self.object.perform(selector, with: value)
+    }
+
+    func accessibilityPerformPress() -> Bool {
+        let selector = NSSelectorFromString("accessibilityPerformPress")
+        guard self.object.responds(to: selector),
+              let implementation = self.object.method(for: selector) else { return false }
+        typealias Press = @convention(c) (AnyObject, Selector) -> ObjCBool
+        return unsafeBitCast(implementation, to: Press.self)(self.object, selector).boolValue
     }
 }
