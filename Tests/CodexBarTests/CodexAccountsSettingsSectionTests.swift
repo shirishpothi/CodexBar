@@ -10,8 +10,10 @@ struct CodexAccountsSettingsSectionTests {
     func `renaming persists presentation without changing auth or exposing names in private mode`() throws {
         let settings = Self.makeSettingsStore(suite: "CodexAccountsSettingsSectionTests-rename")
         settings._test_liveSystemCodexAccount = ObservedSystemCodexAccount(
-            email: "user@example.com", workspaceAccountID: "team-a",
-            codexHomePath: "/Users/test/.codex", observedAt: Date(),
+            email: "user@example.com",
+            workspaceAccountID: "team-a",
+            codexHomePath: "/Users/test/.codex",
+            observedAt: Date(),
             identity: .providerAccount(id: "team-a"))
         let account = try #require(settings.codexVisibleAccounts.first)
         let source = settings.codexActiveSource
@@ -55,9 +57,15 @@ struct CodexAccountsSettingsSectionTests {
         let savedID = UUID()
         func account(workspace: String?) -> CodexVisibleAccount {
             CodexVisibleAccount(
-                id: "user@example.com", email: "user@example.com", workspaceAccountID: workspace,
-                storedAccountID: savedID, selectionSource: .managedAccount(id: savedID),
-                isActive: false, isLive: false, canReauthenticate: true, canRemove: true)
+                id: "user@example.com",
+                email: "user@example.com",
+                workspaceAccountID: workspace,
+                storedAccountID: savedID,
+                selectionSource: .managedAccount(id: savedID),
+                isActive: false,
+                isLive: false,
+                canReauthenticate: true,
+                canRemove: true)
         }
         let unresolved = account(workspace: nil)
         settings.renameCodexAccount(unresolved, to: "School")

@@ -7,7 +7,9 @@ struct CodexAccountNamesTests {
     func `names follow a login and workspace across source and token changes`() {
         let original = Self.account(email: "USER@example.com", workspace: "team-a")
         let promoted = Self.account(
-            email: "user@example.com", workspace: "team-a", source: .liveSystem,
+            email: "user@example.com",
+            workspace: "team-a",
+            source: .liveSystem,
             fingerprint: String(repeating: "b", count: 64))
         let otherLogin = Self.account(email: "other@example.com", workspace: "team-a")
         let otherWorkspace = Self.account(email: "user@example.com", workspace: "team-b")
@@ -23,8 +25,10 @@ struct CodexAccountNamesTests {
         config.codexAccountNames = [account.customNameKey: "  School  "]
         let restored = try JSONDecoder().decode(ProviderConfig.self, from: JSONEncoder().encode(config))
         let projection = CodexVisibleAccountProjection(
-            visibleAccounts: [account], activeVisibleAccountID: account.id,
-            liveVisibleAccountID: nil, hasUnreadableAddedAccountStore: false)
+            visibleAccounts: [account],
+            activeVisibleAccountID: account.id,
+            liveVisibleAccountID: nil,
+            hasUnreadableAddedAccountStore: false)
         let renamed = try #require(projection.applyingCustomNames(restored.codexAccountNames ?? [:])
             .visibleAccounts.first)
         #expect(renamed.displayName == "School")
@@ -73,8 +77,10 @@ struct CodexAccountNamesTests {
         let second = Self.account(email: "second@example.com", workspace: "team-a")
         #expect(first.withCustomName(" \n ").displayName == first.displayName)
         let projection = CodexVisibleAccountProjection(
-            visibleAccounts: [first, second], activeVisibleAccountID: first.id,
-            liveVisibleAccountID: nil, hasUnreadableAddedAccountStore: false)
+            visibleAccounts: [first, second],
+            activeVisibleAccountID: first.id,
+            liveVisibleAccountID: nil,
+            hasUnreadableAddedAccountStore: false)
             .applyingCustomNames([first.customNameKey: "Work", second.customNameKey: "Work"])
         #expect(Set(projection.visibleAccounts.map(\.menuDisplayName)).count == 2)
     }
@@ -87,8 +93,10 @@ struct CodexAccountNamesTests {
         let sibling = Self.account(email: "user@example.com", workspace: "team-b")
         let names = [unknown.customNameKey: "School"]
         let projection = CodexVisibleAccountProjection(
-            visibleAccounts: [resolved, sibling], activeVisibleAccountID: resolved.id,
-            liveVisibleAccountID: nil, hasUnreadableAddedAccountStore: false)
+            visibleAccounts: [resolved, sibling],
+            activeVisibleAccountID: resolved.id,
+            liveVisibleAccountID: nil,
+            hasUnreadableAddedAccountStore: false)
             .applyingCustomNames(names)
         let renamed = try #require(projection.visibleAccounts.first { $0.storedAccountID == savedID })
         #expect(renamed.customName == "School")
@@ -99,13 +107,22 @@ struct CodexAccountNamesTests {
     }
 
     private static func account(
-        email: String, workspace: String?, storedID: UUID = UUID(),
+        email: String,
+        workspace: String?,
+        storedID: UUID = UUID(),
         source: CodexActiveSource = .managedAccount(id: UUID()),
         fingerprint: String = String(repeating: "a", count: 64)) -> CodexVisibleAccount
     {
         CodexVisibleAccount(
-            id: email, email: email, workspaceAccountID: workspace, authFingerprint: fingerprint,
-            storedAccountID: storedID, selectionSource: source,
-            isActive: true, isLive: source == .liveSystem, canReauthenticate: true, canRemove: true)
+            id: email,
+            email: email,
+            workspaceAccountID: workspace,
+            authFingerprint: fingerprint,
+            storedAccountID: storedID,
+            selectionSource: source,
+            isActive: true,
+            isLive: source == .liveSystem,
+            canReauthenticate: true,
+            canRemove: true)
     }
 }
