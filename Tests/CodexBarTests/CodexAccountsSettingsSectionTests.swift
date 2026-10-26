@@ -15,9 +15,18 @@ struct CodexAccountsSettingsSectionTests {
             identity: .providerAccount(id: "team-a"))
         let account = try #require(settings.codexVisibleAccounts.first)
         let source = settings.codexActiveSource
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let initialIdentity = try encoder.encode(
+            (settings.providerConfig(for: .codex) ?? ProviderConfig(id: .codex)).fetchIdentityConfig)
+        let initialRevision = settings.providerConfigRevision(for: .codex)
         settings.renameCodexAccount(account, to: " School ")
         let renamed = try #require(settings.codexVisibleAccounts.first)
         #expect(renamed.displayName == "School")
+        #expect(try encoder.encode(
+            (settings.providerConfig(for: .codex) ?? ProviderConfig(id: .codex)).fetchIdentityConfig) ==
+            initialIdentity)
+        #expect(settings.providerConfigRevision(for: .codex) == initialRevision)
         #expect(settings.codexActiveSource == source)
         #expect(renamed.selectionSource == account.selectionSource)
         #expect(renamed.authFingerprint == account.authFingerprint)
@@ -26,11 +35,35 @@ struct CodexAccountsSettingsSectionTests {
             .contains("School") == false)
         let store = Self.makeUsageStore(settings: settings)
         #expect(store.codexAccountMenuCardModel(for: renamed, accountSnapshot: nil)?.providerName == "School")
+        store.lastSourceLabels[.codex] = "pat"
+        #expect(store.menuCardModel(for: .codex).providerName == "Codex")
+        store.lastSourceLabels[.codex] = "oauth"
+        #expect(store.menuCardModel(for: .codex).providerName == "School")
+        settings.codexUsageDataSource = .pat
+        #expect(store.menuCardModel(for: .codex).providerName == "Codex")
+        settings.codexUsageDataSource = .auto
         settings.hidePersonalInfo = true
         #expect(store.codexAccountMenuCardModel(for: renamed, accountSnapshot: nil)?.providerName == "Codex")
         settings.renameCodexAccount(renamed, to: " ")
         #expect(settings.codexAccountNames.isEmpty)
         #expect(settings.codexVisibleAccounts.first?.displayName == account.displayName)
+    }
+
+    @Test
+    func `clearing a recovered name removes its unresolved account preference`() {
+        let settings = Self.makeSettingsStore(suite: "CodexAccountsSettingsSectionTests-recovered-name")
+        let savedID = UUID()
+        func account(workspace: String?) -> CodexVisibleAccount {
+            CodexVisibleAccount(
+                id: "user@example.com", email: "user@example.com", workspaceAccountID: workspace,
+                storedAccountID: savedID, selectionSource: .managedAccount(id: savedID),
+                isActive: false, isLive: false, canReauthenticate: true, canRemove: true)
+        }
+        let unresolved = account(workspace: nil)
+        settings.renameCodexAccount(unresolved, to: "School")
+        #expect(settings.codexAccountNames[unresolved.customNameRecoveryKey] == "School")
+        settings.renameCodexAccount(account(workspace: "team-a"), to: "")
+        #expect(settings.codexAccountNames.isEmpty)
     }
 
     @Test

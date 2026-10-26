@@ -10,6 +10,7 @@ extension SettingsStore {
         let normalized = account.withCustomName(name).customName
         self.updateProviderConfig(provider: .codex, affectsBackgroundWork: false) { entry in
             var names = entry.codexAccountNames ?? [:]
+            names[account.customNameRecoveryKey] = nil
             names[account.customNameKey] = normalized
             entry.codexAccountNames = names.isEmpty ? nil : names
         }

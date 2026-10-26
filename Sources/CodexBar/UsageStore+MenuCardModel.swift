@@ -46,7 +46,8 @@ extension UsageStore {
         var model = UsageMenuCardView.Model.make(self.menuCardInput(for: provider, context: context, now: now))
             .applyingUsageItemVisibility(hiddenItemIDs: self.settings.hiddenUsageItemIDs(for: provider))
         if provider == .codex, !context.isSettings, context.account == nil,
-           !self.shouldUseAmbientCodexPATForUsage(), !self.settings.hidePersonalInfo,
+           !self.settings.hidePersonalInfo, self.settings.codexUsageDataSource != .pat,
+           self.lastSourceLabels[.codex] != "pat",
            let account = self.settings.codexVisibleAccountProjectionForMenuDisplay?.visibleAccounts
                .first(where: { $0.isActive }),
                account.customName != nil

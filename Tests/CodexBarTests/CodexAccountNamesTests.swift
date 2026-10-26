@@ -45,14 +45,33 @@ struct CodexAccountNamesTests {
         #expect(Set(projection.visibleAccounts.map(\.menuDisplayName)).count == 2)
     }
 
+    @Test
+    func `names survive workspace discovery without leaking to a sibling workspace`() throws {
+        let savedID = UUID()
+        let unknown = Self.account(email: "user@example.com", workspace: nil, storedID: savedID)
+        let resolved = Self.account(email: "user@example.com", workspace: "team-a", storedID: savedID)
+        let sibling = Self.account(email: "user@example.com", workspace: "team-b")
+        let names = [unknown.customNameKey: "School"]
+        let projection = CodexVisibleAccountProjection(
+            visibleAccounts: [resolved, sibling], activeVisibleAccountID: resolved.id,
+            liveVisibleAccountID: nil, hasUnreadableAddedAccountStore: false)
+            .applyingCustomNames(names)
+        let renamed = try #require(projection.visibleAccounts.first { $0.storedAccountID == savedID })
+        #expect(renamed.customName == "School")
+        #expect(projection.visibleAccounts.first { $0.storedAccountID == sibling.storedAccountID }?.customName == nil)
+        let preferred = projection
+            .applyingCustomNames(names.merging([resolved.customNameKey: "Work"]) { _, new in new })
+        #expect(preferred.visibleAccounts.first { $0.storedAccountID == savedID }?.customName == "Work")
+    }
+
     private static func account(
-        email: String, workspace: String,
+        email: String, workspace: String?, storedID: UUID = UUID(),
         source: CodexActiveSource = .managedAccount(id: UUID()),
         fingerprint: String = String(repeating: "a", count: 64)) -> CodexVisibleAccount
     {
         CodexVisibleAccount(
             id: email, email: email, workspaceAccountID: workspace, authFingerprint: fingerprint,
-            storedAccountID: UUID(), selectionSource: source,
+            storedAccountID: storedID, selectionSource: source,
             isActive: true, isLive: source == .liveSystem, canReauthenticate: true, canRemove: true)
     }
 }

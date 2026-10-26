@@ -60,9 +60,30 @@ public struct CodexVisibleAccount: Equatable, Identifiable, Sendable {
 
     /// A presentation preference follows the login and workspace, never the active source or auth token.
     public var customNameKey: String {
+        guard let workspace = ManagedCodexAccount.normalizeWorkspaceAccountID(self.workspaceAccountID) else {
+            return self.customNameRecoveryKey
+        }
+        return self.customNameHash(scope: workspace)
+    }
+
+    /// Missing-auth accounts can be named before their workspace is known. Recover that name only
+    /// for the same saved account or profile, never for another workspace sharing its email.
+    public var customNameRecoveryKey: String {
+        let source = if let storedAccountID {
+            "stored:\(storedAccountID.uuidString.lowercased())"
+        } else {
+            switch self.selectionSource {
+            case let .managedAccount(id): "stored:\(id.uuidString.lowercased())"
+            case let .profileHome(path): "profile:\(CodexHomeScope.normalizedHomePath(path) ?? path)"
+            case .liveSystem: "system"
+            }
+        }
+        return self.customNameHash(scope: "unresolved:\(source)")
+    }
+
+    private func customNameHash(scope: String) -> String {
         let email = self.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let workspace = ManagedCodexAccount.normalizeWorkspaceAccountID(self.workspaceAccountID) ?? ""
-        return SHA256.hash(data: Data("\(email)\0\(workspace)".utf8))
+        return SHA256.hash(data: Data("\(email)\0\(scope)".utf8))
             .map { String(format: "%02x", $0) }.joined()
     }
 
@@ -162,7 +183,9 @@ public struct CodexVisibleAccountProjection: Equatable, Sendable {
 
     public func applyingCustomNames(_ names: [String: String]) -> Self {
         Self(
-            visibleAccounts: self.visibleAccounts.map { $0.withCustomName(names[$0.customNameKey]) },
+            visibleAccounts: self.visibleAccounts.map {
+                $0.withCustomName(names[$0.customNameKey] ?? names[$0.customNameRecoveryKey])
+            },
             activeVisibleAccountID: self.activeVisibleAccountID,
             liveVisibleAccountID: self.liveVisibleAccountID,
             hasUnreadableAddedAccountStore: self.hasUnreadableAddedAccountStore)
