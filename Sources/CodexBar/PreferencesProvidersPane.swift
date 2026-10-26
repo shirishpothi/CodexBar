@@ -123,6 +123,9 @@ struct ProvidersPane: View {
                             Task { @MainActor in
                                 await self.addManagedCodexAccount()
                             }
+                        },
+                        renameAccount: { account, name in
+                            self.settings.renameCodexAccount(account, to: name)
                         })
                 }
             })

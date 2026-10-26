@@ -7,6 +7,33 @@ import Testing
 @Suite(CodexCredentialFixtures())
 struct CodexAccountsSettingsSectionTests {
     @Test
+    func `renaming persists presentation without changing auth or exposing names in private mode`() throws {
+        let settings = Self.makeSettingsStore(suite: "CodexAccountsSettingsSectionTests-rename")
+        settings._test_liveSystemCodexAccount = ObservedSystemCodexAccount(
+            email: "user@example.com", workspaceAccountID: "team-a",
+            codexHomePath: "/Users/test/.codex", observedAt: Date(),
+            identity: .providerAccount(id: "team-a"))
+        let account = try #require(settings.codexVisibleAccounts.first)
+        let source = settings.codexActiveSource
+        settings.renameCodexAccount(account, to: " School ")
+        let renamed = try #require(settings.codexVisibleAccounts.first)
+        #expect(renamed.displayName == "School")
+        #expect(settings.codexActiveSource == source)
+        #expect(renamed.selectionSource == account.selectionSource)
+        #expect(renamed.authFingerprint == account.authFingerprint)
+        #expect(settings.codexVisibleAccountProjectionForMenuDisplay?.visibleAccounts.first?.customName == "School")
+        #expect(CodexAccountSwitcherLabeling.label(for: renamed, ordinal: 1, hidePersonalInfo: true)
+            .contains("School") == false)
+        let store = Self.makeUsageStore(settings: settings)
+        #expect(store.codexAccountMenuCardModel(for: renamed, accountSnapshot: nil)?.providerName == "School")
+        settings.hidePersonalInfo = true
+        #expect(store.codexAccountMenuCardModel(for: renamed, accountSnapshot: nil)?.providerName == "Codex")
+        settings.renameCodexAccount(renamed, to: " ")
+        #expect(settings.codexAccountNames.isEmpty)
+        #expect(settings.codexVisibleAccounts.first?.displayName == account.displayName)
+    }
+
+    @Test
     func `codex accounts section shows live badge only for live only multi account row`() throws {
         let settings = Self.makeSettingsStore(suite: "CodexAccountsSettingsSectionTests-live-badge")
         let store = Self.makeUsageStore(settings: settings)

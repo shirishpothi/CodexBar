@@ -5,7 +5,7 @@ extension UsageStore {
         for account: CodexVisibleAccount,
         accountSnapshot: CodexAccountUsageSnapshot?) -> UsageMenuCardView.Model?
     {
-        self.menuCardModel(
+        var model = self.menuCardModel(
             for: .codex,
             context: .account(.init(
                 snapshot: accountSnapshot?.snapshot,
@@ -13,5 +13,9 @@ extension UsageStore {
                 info: AccountInfo(email: account.email, plan: account.workspaceLabel),
                 historySelection: self.codexPlanUtilizationHistorySelection(forVisibleAccount: account),
                 credits: accountSnapshot?.credits)))
+        if account.customName != nil, !self.settings.hidePersonalInfo {
+            model.providerName = account.menuDisplayName
+        }
+        return model
     }
 }

@@ -8,6 +8,7 @@ import Foundation
 public struct CodexVisibleAccount: Equatable, Identifiable, Sendable {
     public let id: String
     public let email: String
+    public private(set) var customName: String?
     public let workspaceLabel: String?
     public private(set) var displayDiscriminator: String?
     public let workspaceAccountID: String?
@@ -46,13 +47,35 @@ public struct CodexVisibleAccount: Equatable, Identifiable, Sendable {
     }
 
     public var displayName: String {
+        if let customName { return self.disambiguatedCustomName(customName) }
         guard let label = self.disambiguatedWorkspaceLabel ?? self.workspaceLabel else { return self.email }
         return "\(self.email) — \(label)"
     }
 
     public var menuDisplayName: String {
+        if let customName { return self.disambiguatedCustomName(customName) }
         guard let menuWorkspaceLabel else { return self.email }
         return "\(self.email) — \(menuWorkspaceLabel)"
+    }
+
+    /// A presentation preference follows the login and workspace, never the active source or auth token.
+    public var customNameKey: String {
+        let email = self.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let workspace = ManagedCodexAccount.normalizeWorkspaceAccountID(self.workspaceAccountID) ?? ""
+        return SHA256.hash(data: Data("\(email)\0\(workspace)".utf8))
+            .map { String(format: "%02x", $0) }.joined()
+    }
+
+    public func withCustomName(_ name: String?) -> Self {
+        var result = self
+        let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines)
+        result.customName = trimmed.flatMap { $0.isEmpty ? nil : $0 }
+        return result
+    }
+
+    private func disambiguatedCustomName(_ name: String) -> String {
+        guard let displayDiscriminator else { return name }
+        return "\(name) · \(displayDiscriminator)"
     }
 
     public var menuWorkspaceLabel: String? {
@@ -135,6 +158,14 @@ public struct CodexVisibleAccountProjection: Equatable, Sendable {
         self.activeVisibleAccountID = activeVisibleAccountID
         self.liveVisibleAccountID = liveVisibleAccountID
         self.hasUnreadableAddedAccountStore = hasUnreadableAddedAccountStore
+    }
+
+    public func applyingCustomNames(_ names: [String: String]) -> Self {
+        Self(
+            visibleAccounts: self.visibleAccounts.map { $0.withCustomName(names[$0.customNameKey]) },
+            activeVisibleAccountID: self.activeVisibleAccountID,
+            liveVisibleAccountID: self.liveVisibleAccountID,
+            hasUnreadableAddedAccountStore: self.hasUnreadableAddedAccountStore)
     }
 
     public func source(forVisibleAccountID id: String) -> CodexActiveSource? {
