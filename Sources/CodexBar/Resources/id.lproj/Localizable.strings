@@ -2753,3 +2753,9 @@
 "abliteration.ai request failed. Try refreshing later." = "Permintaan abliteration.ai gagal. Coba segarkan lagi nanti.";
 "abliteration.ai returned an unrecognized response. Update CodexBar and try again." = "abliteration.ai mengembalikan respons yang tidak dikenali. Perbarui CodexBar dan coba lagi.";
 "Check your API key in Settings." = "Periksa kunci API Anda di Pengaturan.";
+
+// Codex account names
+"Rename" = "Ubah nama";
+"Rename account" = "Ubah nama akun";
+"Account name" = "Nama akun";
+"Leave blank to use the default name." = "Biarkan kosong untuk menggunakan nama bawaan.";

@@ -9,6 +9,8 @@ read_when:
 
 # Codex provider
 
+Existing accounts keep their default labels until renamed.
+
 In **Settings → Providers → Codex**, choose **Rename** beside an account to give it a name
 such as “Personal” or “School”. Names appear in account pickers and menu card headings.
 Clear the name to restore the default. Names are saved per login and workspace in CodexBar’s

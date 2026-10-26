@@ -2751,3 +2751,9 @@
 "abliteration.ai request failed. Try refreshing later." = "abliteration.ai へのリクエストに失敗しました。後でもう一度更新してください。";
 "abliteration.ai returned an unrecognized response. Update CodexBar and try again." = "abliteration.ai から認識できない応答が返されました。CodexBar を更新して、もう一度お試しください。";
 "Check your API key in Settings." = "設定でAPIキーを確認してください。";
+
+// Codex account names
+"Rename" = "名前を変更";
+"Rename account" = "アカウント名を変更";
+"Account name" = "アカウント名";
+"Leave blank to use the default name." = "空欄にするとデフォルトの名前を使用します。";

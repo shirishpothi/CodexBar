@@ -34,6 +34,40 @@ struct CodexAccountNamesTests {
     }
 
     @Test
+    func `existing version one config and version three accounts need no name migration`() throws {
+        let legacyConfig = Data(#"""
+        {"version":1,"providers":[{"id":"codex","enabled":true,"source":"oauth",
+        "hiddenUsageItemIDs":["section:codex-reset-credits"],
+        "codexProfileHomePaths":["/tmp/example-profile"],
+        "codexActiveSource":{"kind":"managedAccount","accountID":"11111111-1111-1111-1111-111111111111"}}]}
+        """#.utf8)
+        let registry = Data(#"""
+        {"version":3,"accounts":[{"id":"11111111-1111-1111-1111-111111111111",
+        "email":"user@example.com","workspaceAccountID":"team-a",
+        "managedHomePath":"/tmp/example-managed","createdAt":1,"updatedAt":2,"lastAuthenticatedAt":2}]}
+        """#.utf8)
+        var config = try JSONDecoder().decode(CodexBarConfig.self, from: legacyConfig)
+        let accounts = try JSONDecoder().decode(ManagedCodexAccountSet.self, from: registry)
+        var provider = try #require(config.providerConfig(for: .codex))
+        #expect(provider.codexAccountNames == nil)
+        #expect(accounts.version == 3)
+        #expect(accounts.accounts.first?.email == "user@example.com")
+        let encoder = JSONEncoder()
+        let original = try #require(JSONSerialization.jsonObject(with: encoder.encode(provider)) as? [String: Any])
+        let account = Self.account(email: "user@example.com", workspace: "team-a")
+        provider.codexAccountNames = [account.customNameKey: "School"]
+        config.setProviderConfig(provider)
+        let restored = try JSONDecoder().decode(CodexBarConfig.self, from: encoder.encode(config))
+        let restoredProvider = try #require(restored.providerConfig(for: .codex))
+        #expect(restored.version == 1)
+        #expect(restoredProvider.codexAccountNames?[account.customNameKey] == "School")
+        var unchanged = try #require(
+            JSONSerialization.jsonObject(with: encoder.encode(restoredProvider)) as? [String: Any])
+        unchanged.removeValue(forKey: "codexAccountNames")
+        #expect(NSDictionary(dictionary: original).isEqual(to: unchanged))
+    }
+
+    @Test
     func `empty names restore defaults and duplicate names stay distinguishable`() {
         let first = Self.account(email: "first@example.com", workspace: "team-a")
         let second = Self.account(email: "second@example.com", workspace: "team-a")

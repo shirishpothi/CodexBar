@@ -2750,3 +2750,9 @@
 "abliteration.ai request failed. Try refreshing later." = "Fallou a solicitude a abliteration.ai. Tenta actualizar máis tarde.";
 "abliteration.ai returned an unrecognized response. Update CodexBar and try again." = "abliteration.ai devolveu unha resposta descoñecida. Actualiza CodexBar e téntao de novo.";
 "Check your API key in Settings." = "Comproba a túa clave API en Configuración.";
+
+// Codex account names
+"Rename" = "Cambiar o nome";
+"Rename account" = "Cambiar o nome da conta";
+"Account name" = "Nome da conta";
+"Leave blank to use the default name." = "Deixa este campo baleiro para usar o nome predeterminado.";

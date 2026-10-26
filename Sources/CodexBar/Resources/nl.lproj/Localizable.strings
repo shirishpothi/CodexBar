@@ -2748,3 +2748,9 @@
 "abliteration.ai request failed. Try refreshing later." = "Het abliteration.ai-verzoek is mislukt. Probeer later opnieuw te vernieuwen.";
 "abliteration.ai returned an unrecognized response. Update CodexBar and try again." = "abliteration.ai heeft een onbekend antwoord teruggegeven. Werk CodexBar bij en probeer het opnieuw.";
 "Check your API key in Settings." = "Controleer je API-sleutel in Instellingen.";
+
+// Codex account names
+"Rename" = "Naam wijzigen";
+"Rename account" = "Accountnaam wijzigen";
+"Account name" = "Accountnaam";
+"Leave blank to use the default name." = "Laat dit veld leeg om de standaardnaam te gebruiken.";

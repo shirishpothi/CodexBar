@@ -2752,3 +2752,9 @@
 "abliteration.ai request failed. Try refreshing later." = "Yêu cầu abliteration.ai không thành công. Hãy thử làm mới sau.";
 "abliteration.ai returned an unrecognized response. Update CodexBar and try again." = "abliteration.ai trả về phản hồi không nhận dạng được. Hãy cập nhật CodexBar rồi thử lại.";
 "Check your API key in Settings." = "Kiểm tra khóa API trong Cài đặt.";
+
+// Codex account names
+"Rename" = "Đổi tên";
+"Rename account" = "Đổi tên tài khoản";
+"Account name" = "Tên tài khoản";
+"Leave blank to use the default name." = "Để trống để dùng tên mặc định.";

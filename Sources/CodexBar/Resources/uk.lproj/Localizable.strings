@@ -2752,3 +2752,9 @@
 "abliteration.ai request failed. Try refreshing later." = "Запит до abliteration.ai не виконано. Спробуйте оновити пізніше.";
 "abliteration.ai returned an unrecognized response. Update CodexBar and try again." = "abliteration.ai повернув невідому відповідь. Оновіть CodexBar і спробуйте знову.";
 "Check your API key in Settings." = "Перевірте ключ API в налаштуваннях.";
+
+// Codex account names
+"Rename" = "Перейменувати";
+"Rename account" = "Перейменувати обліковий запис";
+"Account name" = "Назва облікового запису";
+"Leave blank to use the default name." = "Залиште поле порожнім, щоб використовувати назву за замовчуванням.";
