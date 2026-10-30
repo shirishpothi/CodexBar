@@ -2771,3 +2771,5 @@
 "Rename account" = "تغییر نام حساب";
 "Account name" = "نام حساب";
 "Leave blank to use the default name." = "برای استفاده از نام پیش‌فرض، این قسمت را خالی بگذارید.";
+"Rewards" = "پاداش‌ها";
+"Reward expiry" = "انقضای پاداش‌ها";

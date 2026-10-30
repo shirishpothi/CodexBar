@@ -2765,3 +2765,5 @@
 "Rename account" = "Cambiar nombre de la cuenta";
 "Account name" = "Nombre de la cuenta";
 "Leave blank to use the default name." = "Deja este campo vacío para usar el nombre predeterminado.";
+"Rewards" = "Recompensas";
+"Reward expiry" = "Vencimiento de las recompensas";

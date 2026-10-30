@@ -2769,3 +2769,5 @@
 "Rename account" = "Canvia el nom del compte";
 "Account name" = "Nom del compte";
 "Leave blank to use the default name." = "Deixa-ho en blanc per fer servir el nom per defecte.";
+"Rewards" = "Recompenses";
+"Reward expiry" = "Caducitat de les recompenses";

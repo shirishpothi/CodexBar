@@ -2745,3 +2745,5 @@
 "Rename account" = "重新命名帳號";
 "Account name" = "帳號名稱";
 "Leave blank to use the default name." = "留空以使用預設名稱。";
+"Rewards" = "獎勵";
+"Reward expiry" = "獎勵到期日期";

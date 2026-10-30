@@ -2735,3 +2735,5 @@
 "Rename account" = "계정 이름 변경";
 "Account name" = "계정 이름";
 "Leave blank to use the default name." = "기본 이름을 사용하려면 비워 두세요.";
+"Rewards" = "보상";
+"Reward expiry" = "보상 만료일";

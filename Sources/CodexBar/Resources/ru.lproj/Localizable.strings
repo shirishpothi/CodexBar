@@ -2768,3 +2768,5 @@
 "Rename account" = "Переименовать аккаунт";
 "Account name" = "Имя аккаунта";
 "Leave blank to use the default name." = "Оставьте поле пустым, чтобы использовать имя по умолчанию.";
+"Rewards" = "Награды";
+"Reward expiry" = "Срок действия наград";
