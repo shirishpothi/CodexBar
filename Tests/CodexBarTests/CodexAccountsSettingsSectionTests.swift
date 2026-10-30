@@ -16,6 +16,10 @@ struct CodexAccountsSettingsSectionTests {
             observedAt: Date(),
             identity: .providerAccount(id: "team-a"))
         let account = try #require(settings.codexVisibleAccounts.first)
+        let store = Self.makeUsageStore(settings: settings)
+        let tokenAccount = ProviderTokenAccount(
+            id: UUID(), label: "Synthetic", token: "fixture-token", addedAt: 0, lastUsed: nil)
+        let initialCacheKey = store.tokenAccountSnapshotCacheKey(provider: .codex, account: tokenAccount)
         let source = settings.codexActiveSource
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
@@ -30,12 +34,12 @@ struct CodexAccountsSettingsSectionTests {
             initialIdentity)
         #expect(settings.providerConfigRevision(for: .codex) == initialRevision)
         #expect(settings.codexActiveSource == source)
+        #expect(store.tokenAccountSnapshotCacheKey(provider: .codex, account: tokenAccount) == initialCacheKey)
         #expect(renamed.selectionSource == account.selectionSource)
         #expect(renamed.authFingerprint == account.authFingerprint)
         #expect(settings.codexVisibleAccountProjectionForMenuDisplay?.visibleAccounts.first?.customName == "School")
         #expect(CodexAccountSwitcherLabeling.label(for: renamed, ordinal: 1, hidePersonalInfo: true)
             .contains("School") == false)
-        let store = Self.makeUsageStore(settings: settings)
         #expect(store.codexAccountMenuCardModel(for: renamed, accountSnapshot: nil)?.providerName == "School")
         store.lastSourceLabels[.codex] = "pat"
         #expect(store.menuCardModel(for: .codex).providerName == "Codex")
@@ -45,6 +49,9 @@ struct CodexAccountsSettingsSectionTests {
         #expect(store.menuCardModel(for: .codex).providerName == "Codex")
         settings.codexUsageDataSource = .auto
         settings.hidePersonalInfo = true
+        let pane = ProvidersPane(settings: settings, store: store)
+        let privateState = try #require(pane._test_codexAccountsSectionState())
+        #expect(!privateState.systemDisplayName.contains("School"))
         #expect(store.codexAccountMenuCardModel(for: renamed, accountSnapshot: nil)?.providerName == "Codex")
         settings.renameCodexAccount(renamed, to: " ")
         #expect(settings.codexAccountNames.isEmpty)
@@ -374,8 +381,7 @@ struct CodexAccountsSettingsSectionTests {
     }
 
     private static func makeSettingsStore(suite: String) -> SettingsStore {
-        let defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
+        let defaults = InMemoryUserDefaults()
         let configStore = testConfigStore(suiteName: suite)
 
         return SettingsStore(

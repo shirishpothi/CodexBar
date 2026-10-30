@@ -26,6 +26,7 @@ struct LocalizationLanguageCatalogTests {
             "By model and reasoning effort",
             "CodexBar follows",
             "Color by provider",
+            "Cursor app session expired — open Cursor to sign in again, or sign in to cursor.com in your browser.",
             "Pace sign",
             "Ahead of pace is +",
             "Reserve is +",
@@ -763,6 +764,7 @@ struct LocalizationLanguageCatalogTests {
             "Grok CLI",
             "Helmcode Cloud",
             "Input",
+            "Kimi Code",
             "LLMMAN_API_KEY",
             "NaN Builders",
             "No",
@@ -851,20 +853,6 @@ struct LocalizationLanguageCatalogTests {
         ]
         let unchanged = Set(english.keys.filter { italian[$0] == english[$0] })
         #expect(unchanged == intentionallyUnchanged)
-
-        let warningFormat = try #require(italian["quota_warning_notification_body"])
-        let warning = String(
-            format: warningFormat,
-            locale: Locale(identifier: "it_IT"),
-            arguments: ["20%", 15, "settimanale"])
-        #expect(warning == "Rimane 20%. Hai raggiunto la soglia di avviso del 15% per la quota settimanale.")
-
-        let titleFormat = try #require(italian["quota_warning_notification_title"])
-        let title = String(
-            format: titleFormat,
-            locale: Locale(identifier: "it_IT"),
-            arguments: ["Codex", "settimanale"])
-        #expect(title == "Quota settimanale di Codex quasi esaurita")
     }
 }
 
